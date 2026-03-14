@@ -136,17 +136,20 @@ jobs:
         
     - name: Package N1 Image
       run: |
-        # 1. 克隆 Flippy 的 Amlogic 打包工具
-        git clone --depth 1 https://github.com/unifreq/openwrt-mainline-kernel amlogic
+        # 1. 下载 ophub 提供的打包脚本
+        git clone --depth 1 https://github.com/ophub/amlogic-s9xxx-armbian.git amlogic
         
-        # 2. 将编译好的 rootfs 移动到打包目录
-        cp bin/targets/amlogic/meson/*.tar.gz amlogic/openwrt-armvirt-64-generic-rootfs.tar.gz
+        # 2. 准备文件目录
+        mkdir -p amlogic/openwrt
+        # 将你刚才编译出来的 rootfs 拷贝并改名为 rootfs.tar.gz
+        cp bin/targets/amlogic/meson/*.tar.gz amlogic/openwrt/rootfs.tar.gz
         
-        # 3. 进入目录执行打包脚本 (指定为 n1, 内核版本选 6.1.x)
+        # 3. 执行打包脚本
+        # -m 指定设备为 n1, -k 指定内核（这里可以用最新的 6.1 或 6.6）
         cd amlogic
-        sudo ./build.sh -m n1 -k 6.1.x
+        sudo ./build.sh -m n1 -k 6.1.100 -b openwrt
         
-        # 4. 把打包好的 img 移回 bin 目录以便最后上传
+        # 4. 整理产物
         mkdir -p ../bin/targets/amlogic/meson/out
         cp out/*.img ../bin/targets/amlogic/meson/out/
         
