@@ -133,15 +133,22 @@ jobs:
         touch release.txt
         [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
-
-    - name: Package Armvirt as OpenWrt
-      uses: unifreq/openwrt-aarch64@main
-      with:
-        install_program: 'n1'
-        # 这里的路径一定要对应你编译出来的 tar.gz 位置
-        openwrt_armvirt: bin/targets/amlogic/meson/openwrt-amlogic-meson-generic-rootfs.tar.gz
-        # 设置内核版本，通常用 6.1.x 或 5.15.x，flippy 脚本会自动选择
-        kernel_version_compiler: '6.1.x'
+        
+    - name: Package N1 Image
+      run: |
+        # 1. 克隆 Flippy 的 Amlogic 打包工具
+        git clone --depth 1 https://github.com/unifreq/openwrt-mainline-kernel amlogic
+        
+        # 2. 将编译好的 rootfs 移动到打包目录
+        cp bin/targets/amlogic/meson/*.tar.gz amlogic/openwrt-armvirt-64-generic-rootfs.tar.gz
+        
+        # 3. 进入目录执行打包脚本 (指定为 n1, 内核版本选 6.1.x)
+        cd amlogic
+        sudo ./build.sh -m n1 -k 6.1.x
+        
+        # 4. 把打包好的 img 移回 bin 目录以便最后上传
+        mkdir -p ../bin/targets/amlogic/meson/out
+        cp out/*.img ../bin/targets/amlogic/meson/out/
         
     - name: Upload firmware to release
       uses: softprops/action-gh-release@master
